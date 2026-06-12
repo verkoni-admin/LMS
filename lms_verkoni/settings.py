@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from rest_framework.templatetags import rest_framework
 
 # load environment variables
 load_dotenv()
@@ -41,7 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'learningManagementSystem'
+
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'storages',
+
+    'learningManagementSystem',
 ]
 
 MIDDLEWARE = [
@@ -110,6 +117,29 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ),
+
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated'
+    )
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+
+    # this generates a new refresh token every time a new access token is requested using the current refresh token
+    "ROTATE_REFRESH_TOKEN": True,
+    # revoke access to older refresh token that still hasn't expired
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    "AUTH_HEADER_TYPES": ("Bearer",)
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -130,7 +160,26 @@ STATIC_URL = 'static/'
 
 # setup media configuration
 
-MEDIA_ROOT = BASE_DIR / "media"
+AWS_ACCESS_KEY_ID = os.environ.get("BACKBLAZE_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("BACKBLAZE_API_KEY")
+AWS_STORAGE_BUCKET_NAME = os.environ.get("BACKBLAZE_BUCKET_NAME")
+
+AWS_S3_ENDPOINT_URL = os.environ.get("BACKBLAZE_BUCKET_ENDPOINT")
+AWS_S3_REGION_NAME = os.environ.get("BACKBLAZE_BUCKET_REGION")
+
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = True
+AWS_QUERYSTRING_EXPIRE = 3600
+AWS_S3_FILE_OVERWRITE = False
+
 MEDIA_URL = "/media/"
 
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage"
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+    }
+}
 
