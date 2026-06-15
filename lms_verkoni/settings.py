@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from rest_framework.templatetags import rest_framework
 
 # load environment variables
 load_dotenv()
@@ -48,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'storages',
 
+    'accounts',
     'learningManagementSystem',
 ]
 
@@ -96,7 +96,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "learningManagementSystem.MyUser"
+AUTH_USER_MODEL = "accounts.MyUser"
 
 
 # Password validation
@@ -118,13 +118,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication'
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
 
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated'
-    )
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
 
 from datetime import timedelta
@@ -133,7 +133,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
 
     # this generates a new refresh token every time a new access token is requested using the current refresh token
-    "ROTATE_REFRESH_TOKEN": True,
+    "ROTATE_REFRESH_TOKENS": True,
     # revoke access to older refresh token that still hasn't expired
     "BLACKLIST_AFTER_ROTATION": True,
 
