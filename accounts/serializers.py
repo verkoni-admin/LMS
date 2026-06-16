@@ -45,3 +45,31 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         )
 
         return user
+
+
+class LoginUserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+    def validate_password(self, password):
+        if len(password) < 8:
+            raise serializers.ValidationError({"password": "Please check your credentials. Email or password is incorrect"})
+        return password
+
+    def validate(self, attrs):
+        email = attrs["email"]
+        password = attrs["password"]
+
+        try:
+            user = User.objects.get(email=email)
+            # case, the user does not exist in the database!
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"password": "Please check your credentials. Email or password is incorrect"})
+
+        if not user.check_password(password):
+            raise serializers.ValidationError({"password": "Please check your credentials. Email or password is incorrect"})
+
+        attrs["user"] = user
+
+        return attrs
+
