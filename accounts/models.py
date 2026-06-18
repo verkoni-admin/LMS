@@ -57,3 +57,10 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
 
     REQUIRED_FIELDS = ["name"]
+
+
+class InstructorProfile(models.Model):
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    headline = models.CharField(max_length=300, null=True)
+    bio = models.TextField(null=True)
+

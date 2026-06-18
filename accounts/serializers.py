@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.exceptions import TokenError
 from .utils import MAX_PROFILE_PIC_SIZE
+from rest_framework_simplejwt.tokens import RefreshToken
+from .models import InstructorProfile
 
 
 User = get_user_model()
@@ -44,6 +47,10 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
+        if user.role == "instructor":
+            # create the instructor profile
+            InstructorProfile.objects.create(user=user)
+
         return user
 
 
@@ -72,4 +79,35 @@ class LoginUserSerializer(serializers.Serializer):
         attrs["user"] = user
 
         return attrs
+
+class RefreshJwtTokenSerializer(serializers.Serializer):
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if not refresh_token:
+            # make the user log in again! on frontend redirect!
+            raise serializers.ValidationError("Refresh token does not exist. please log in again")
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.check_blacklist()
+        except TokenError:
+            raise serializers.ValidationError("Invalid or expired refresh token. Please log in again")
+
+        user_id = token["user_id"]
+
+        try:
+            user = User.objects.get(id=user_id)
+            attrs["user"] = user
+            attrs["refresh_token"] = token
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User does not exist")
+
+        return attrs
+
+
+
+
 

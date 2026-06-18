@@ -1,13 +1,16 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.permissions import AllowAny
-from accounts.serializers import RegisterUserSerializer, LoginUserSerializer
+from accounts.serializers import RegisterUserSerializer, LoginUserSerializer, RefreshJwtTokenSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from django.contrib.auth import get_user_model
 
 # Create your views here.
+
+User = get_user_model()
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
@@ -52,6 +55,39 @@ def login_user(request):
         response.set_cookie(
             key="refresh_token",
             value=str(refresh_token),
+            httponly=True,
+            secure=True
+        )
+
+        return response
+
+    return Response({
+        "errors": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def refresh_jwt_token(request):
+    serializer = RefreshJwtTokenSerializer(data=request.data, context={"request": request})
+
+    if serializer.is_valid():
+        user = serializer.validated_data.get("user")
+        old_refresh_token = serializer.validated_data.get("refresh_token")
+        new_refresh_token = RefreshToken.for_user(user)
+        new_access_token = new_refresh_token.access_token
+
+        # blacklist the old refresh token
+        old_refresh_token.blacklist()
+
+        response = Response({
+            "message": "token refreshed successfully",
+            "access_token": str(new_access_token)
+        }, status=status.HTTP_200_OK)
+
+        response.set_cookie(
+            key="refresh_token",
+            value=str(new_refresh_token),
             httponly=True,
             secure=True
         )
