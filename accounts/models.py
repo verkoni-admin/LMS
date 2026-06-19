@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from accounts.validators import validate_image_size
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -60,7 +61,19 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
 
 
 class InstructorProfile(models.Model):
-    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    user = models.OneToOneField(MyUser, on_delete=models.CASCADE)
     headline = models.CharField(max_length=300, null=True)
     bio = models.TextField(null=True)
+    # run migrations!
 
+    def __str__(self):
+        return self.user.name
+
+    def clean(self):
+        if self.user.role != "instructor":
+            print("Model Level: user is not an instructor")
+            raise ValidationError("User is not an instructor")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
