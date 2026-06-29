@@ -108,7 +108,6 @@ class RefreshJwtTokenSerializer(serializers.Serializer):
         return attrs
 
 class UpdateInstructorProfile(serializers.ModelSerializer):
-
     class Meta:
         model = InstructorProfile
 
